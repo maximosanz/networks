@@ -17,41 +17,42 @@ Eend = 0.1
 restartF = ''
 outputFilename = ''
 transform = False
+inputFilename = ''
 
 # Command line options
 
 leave=False
 if len(sys.argv)>1:
-	for opt in sys.argv[1::2]:
-		if not re.match('--',opt):
-			leave =True
-			break
-		else:
+	for opt in sys.argv[1:]:
+		if re.match('--',opt):
+			val = sys.argv[sys.argv.index(opt)+1]
 			opt = opt[2:]
-		val = sys.argv[sys.argv.index('--'+opt)+1]
-		if opt == 'nparam':
-			Nparam = int(val)
-		elif opt == 'restart':
-			restartF = val
-		elif opt == 'npart':
-			Np = int(val)
-		elif opt == 'percentile':
-			percentile = int(val)
-		elif opt == 'Estart':
-			Estart = float(val)
-		elif opt == 'Eend':
-			Eend = float(val)
-		elif opt == 'out':
-			outputFilename = val
-		elif opt == 'transform':
-			transform = True
+			if opt == 'nparam':
+				Nparam = int(val)
+			elif opt == 'restart':
+				restartF = val
+			elif opt = 'data':
+				inputFilename = val
+			elif opt == 'npart':
+				Np = int(val)
+			elif opt == 'percentile':
+				percentile = int(val)
+			elif opt == 'Estart':
+				Estart = float(val)
+			elif opt == 'Eend':
+				Eend = float(val)
+			elif opt == 'out':
+				outputFilename = val
+			elif opt == 'transform':
+				transform = True
 else:
 	leave=True
-if not Nparam or not outputFilename:
+if not Nparam or not outputFilename or not inputFilename:
 	leave =True
 if leave:
 	print ('\nUsage:'
 	'\n\nRequired arguments:'
+	'\n\t--data Input data graph (as an edge list)'
 	'\n\t--nparam Number of parameters'
 	'\n\t--out Output file name'
 	'\n\nOptional arguments (default values):'
@@ -79,7 +80,7 @@ prior[:,1].fill(1) #upper bound
 
 ##########################
 # Include here the graph you wish to compare to, the GDDs will be computed.
-Datagraph = nx.read_edgelist('homo_domainppiedges.txt')
+Datagraph = nx.read_edgelist(inputFilename)
 Data = loadf.get_GDDs(Datagraph,transform=True)
 
 #######################
