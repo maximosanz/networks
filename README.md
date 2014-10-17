@@ -24,7 +24,7 @@ GUIDELINES:
 
 - If you want to perform ABC-SMC on networks:
 
-You must have a generative model as a python function that returns a networkX graph object.
+You must have a generative model as a python function that takes in an array of parameter values as input and returns a networkX graph object.
 First edit the abcsmc_graphs function in loadFunctions.py to call your function.
 Then you can simply run abcsmc.py with a the required and optional arguments (python abcsmc.py to see them).
 

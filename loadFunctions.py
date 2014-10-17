@@ -166,7 +166,7 @@ def abcsmc_graphs(data,Np,Estart,Eend,Nparam,prior,outputFilename='abcsmcresults
 			####################################
 			## INCORPORATE GRAPH GENERATOR HERE, a function that takes the parameters, p as an argument and returns the graph, x
 			## x must be a networkx Graph that will be compared to the data
-			x = #Insert graph generating function
+			x = my_graph_generator(p) 
 			
 			# Following if statement in case model returns None for invalid graphs
 			if x is not None:
