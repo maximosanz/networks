@@ -166,10 +166,9 @@ def abcsmc_graphs(data,Np,Estart,Eend,Nparam,prior,outputFilename='abcsmcresults
 			####################################
 			## INCORPORATE GRAPH GENERATOR HERE, a function that takes the parameters, p as an argument and returns the graph, x
 			## x must be a networkx Graph that will be compared to the data
-			seed = nx.cycle_graph(5)
-			x = dd_model(p,seed,1581)
+			x = #Insert graph generating function
 			
-			# Following if statement because model returns None for invalid graphs
+			# Following if statement in case model returns None for invalid graphs
 			if x is not None:
 				
 				# x must have integers as node IDs (from 0 to len(x)-1)
