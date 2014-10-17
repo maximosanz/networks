@@ -13,31 +13,31 @@ import scipy.spatial
 
 # Returns the seedgraph and the compatibility information of each superfamily, which will be extended if more superfamilies come in.
 
-def create_seed(domains_g,loops=True,ringSize=5):
+def create_seed(G,loops=True,ringSize=5):
 	supfamlist = []
 	compatibilitylist = []
-	if not domains_g:
+	if not G:
 		seedgraph = nx.cycle_graph(ringSize)
 	else:
 		if not loops:
-			for n in domains_g.nodes():
-				neigh = domains_g.neighbors(n)
+			for n in G.nodes():
+				neigh = G.neighbors(n)
 				if neigh == [n]:
-					domains_g.remove_node(n)
+					G.remove_node(n)
 				elif n in neigh:
-					domains_g.remove_edge(n,n)
-		initialnodenumber_i=len(domains_g)
+					G.remove_edge(n,n)
+		initialnodenumber_i=len(G)
 
 		seedgraph=nx.Graph()
 		seedgraph.add_nodes_from(range(initialnodenumber_i))
 	
 		#adding 'superfamily' attribute to each of the nodes.
 		for i in (range(initialnodenumber_i)):
-			seedgraph.node[i]['family']=domains_g.nodes()[i] 
+			seedgraph.node[i]['family']=G.nodes()[i] 
 		#adding edges to all the nodes
 		for eachnode_i in seedgraph.nodes():
 			nodefamily_s=seedgraph.node[eachnode_i]['family'] #determining superfamily of the node
-			compatiblefamily_l=domains_g.edge[nodefamily_s].keys()#determining what that superfamily is compatible with.
+			compatiblefamily_l=G.edge[nodefamily_s].keys()#determining what that superfamily is compatible with.
 			for eachcompatiblefamily_s in compatiblefamily_l: # for each compatiblefamily of the node
 
 				for targetnode_i,targetnodefamily_d in seedgraph.node.items(): #checking which nodes have the compatible family
@@ -82,7 +82,7 @@ def dd_model(parameters,seed,desiredfinalnodecount_i,dda=False,domain=False,loop
 		return None
 
 	# Determining the value of each parameter according to the type of model selected
-	# Parameters should appear in the following order: [pLoss,pGain,pNewSuperfamily,pParentChild]
+	# Parameters should be provided in the following order: [pLoss,pGain,pNewSuperfamily,pParentChild]
 	# Only required parameters for the selected type of model should be included. e.g. do not include pGain if dda is False
 	npar = 1
 	pLoss = parameters[0]
@@ -111,8 +111,6 @@ def dd_model(parameters,seed,desiredfinalnodecount_i,dda=False,domain=False,loop
 	initialnodenumber_i=len(seedgraph)
 	supfam_number = initialnodenumber_i
 	
-	#------------------------------------------------
-	# Generating the model 1 time
 	graph1=seedgraph.copy()
 	nodenumber_i=initialnodenumber_i - 1
 	# x keeps track of how many nodes are orphan or contain only a self loop (not considered for the final count)
@@ -122,23 +120,26 @@ def dd_model(parameters,seed,desiredfinalnodecount_i,dda=False,domain=False,loop
 			x += 1
 	edgeno = len(graph1.edges())
 	while nodenumber_i-x < desiredfinalnodecount_i:
-		nodenumber_i+=1 # node number is the 'child' node.
+		nodenumber_i+=1 
+
+		#When nodemax, edgemax or orphanmax are provided, the function returns None if the limit is reached
+
 		if nodemax and nodenumber_i > nodemax:
 			return None
 		if edgemax and edgeno > edgemax:
 			return None
 		if orphanmax and x > orphanmax:
 			return None
-		rndpick_i=rd.choice(graph1.nodes()) #Picking random node
+		rndpick_i=rd.choice(graph1.nodes()) 
 		attachtoOrphan = False
 		attachtoSelforDad = False
 		selfconnected = False
-		# Did I pick an orphan?
+
 		if graph1.degree(rndpick_i) == 0 or graph1.neighbors(rndpick_i) == [rndpick_i]:
 			orphanDad = True
 		else:
 			orphanDad = False
-		graph1.add_node(nodenumber_i) #duplicating to form child node.
+		graph1.add_node(nodenumber_i)
 
 		# Modelling the de-novo generation of new superfamilies - Only if denovoDomain is True and its probability is satisfied
 		#-------------------------------------------------------------------------------
@@ -162,25 +163,25 @@ def dd_model(parameters,seed,desiredfinalnodecount_i,dda=False,domain=False,loop
 			if domain:
 				nodefamily = graph1.node[rndpick_i]['family']
 				supfamlist[nodefamily].update({nodenumber_i})
-				graph1.node[nodenumber_i]['family']=nodefamily #adding the attribute to the child node.
-			neig_l=graph1.neighbors(rndpick_i) #determining interactions of parent node to then add them to the child node
+				graph1.node[nodenumber_i]['family']=nodefamily
+			neig_l=graph1.neighbors(rndpick_i)
 		
-			for i_i in neig_l: #adding edges to the child node.
+			for i_i in neig_l:
 				graph1.add_edge(nodenumber_i,i_i)
 				edgeno += 1
-				if i_i == rndpick_i: # automatic parent-child edge
+				if i_i == rndpick_i:
 					graph1.add_edge(nodenumber_i,nodenumber_i)
 					edgeno += 1
 					selfconnected = True
 					if not loops:
 						print 'Error: Loops are not allowed. If you wish to incorporate loops set the variable "loops" to True'
 						return None
-			#-----------------------------------------------------------------------------------
+
 
 			# Determining if should add interaction with parent
 			#------------------------------------------------------------------------
 			if not loops:
-				a=rd.random()  #determining if should add interaction between parent and child node.
+				a=rd.random() 
 				if a<pParentChild:
 					graph1.add_edge(nodenumber_i,rndpick_i)
 					edgeno += 1
@@ -196,27 +197,22 @@ def dd_model(parameters,seed,desiredfinalnodecount_i,dda=False,domain=False,loop
 						graph1.remove_edge(*edge)
 						edgeno -= 1
 				neig_l.remove(rndpick_i)
-			#------------------------------------------------------------------------ 
 	
 			# Divergence Step
 			#--------------------------------------------------------------
-			# This is where interactions are deleted as there are 2 copies of the same gene and so mutations in one is not detrimental to the organism.
-			# This could lead to redundancy, subfunctionalisation,pseudogenisation or parent node isolation.
 
-			for i_i in neig_l: #determining the neighbors of the parent node (at this time these neighbors are also the same as the child node)
+			for i_i in neig_l: 
 				b=rd.random()
-				if b<pLoss:      #the chosen edge is only deleted with probability of probq.
-					rndedge= rd.choice([(rndpick_i,i_i),(nodenumber_i,i_i)])  # picking either 'parent-neig' or 'child-neig' and deleting the picked one.
+				if b<pLoss:
+					rndedge= rd.choice([(rndpick_i,i_i),(nodenumber_i,i_i)])
 					graph1.remove_edge(*rndedge) 
 					edgeno -= 1
-			#--------------------------------------------------------------------------
 		
 			# Attachment Step
 			#------------------------------------------------------------- This section doesn't exist in the DD model.
-			# The duplicates are randomly chosen and forms an interaction with other nodes. In DDA it cannot form interaction with itself. 
 
 			if dda and rd.random()<pGain:
-				attachfrom=rd.choice([nodenumber_i,rndpick_i]) #picking either parent or child node to add an interaction
+				attachfrom=rd.choice([nodenumber_i,rndpick_i])
 				if not domain:
 					pool = set(graph1.nodes())
 				else:
@@ -232,12 +228,10 @@ def dd_model(parameters,seed,desiredfinalnodecount_i,dda=False,domain=False,loop
 					attachto = rd.choice(pool)
 					if attachto in [nodenumber_i,rndpick_i]:
 						attachtoSelforDad = True
-					# did I pick an orphan?
 					if graph1.degree(attachto) == 0 or graph1.neighbors(attachto) == [attachto]:
 						attachtoOrphan = True
 					graph1.add_edge(attachfrom,attachto)
 					edgeno += 1
-			#------------------------------------------------------------------------------------------------------------------
 		
 		## Check which orphan nodes have been generated or lost
 		if graph1.degree(nodenumber_i) == 0 or graph1.neighbors(nodenumber_i) == [nodenumber_i]:
