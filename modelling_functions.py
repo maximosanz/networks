@@ -103,7 +103,7 @@ def dd_model(parameters,seed,desiredfinalnodecount_i,dda=False,domain=False,loop
 		return None
 
 	# Retrieving information from the seed
-	seedgraph = seed
+	seedgraph = seed[0]
 	if domain:
 		supfamlist = copy.deepcopy(seed[1])
 		compatibilitylist = copy.deepcopy(seed[2])

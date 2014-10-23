@@ -3,6 +3,7 @@ import numpy as np
 import random as rd
 import networkx as nx
 import orca
+import modelling_functions as modf
 
 def perturb(p0,prior,pop):
     # uniform component wise perturbation kernel
@@ -166,8 +167,7 @@ def abcsmc_graphs(data,Np,Estart,Eend,Nparam,prior,outputFilename='abcsmcresults
 			####################################
 			## INCORPORATE GRAPH GENERATOR HERE, a function that takes the parameters, p as an argument and returns the graph, x
 			## x must be a networkx Graph that will be compared to the data
-			x = my_graph_generator(p) 
-			
+			x = my_graph_generator(p)
 			# Following if statement in case model returns None for invalid graphs
 			if x is not None:
 				
@@ -184,7 +184,7 @@ def abcsmc_graphs(data,Np,Estart,Eend,Nparam,prior,outputFilename='abcsmcresults
 				pop[i][accepted,:] = p
 				Distance[accepted] = d
 				accepted += 1
-				print 'Hits:', accepted,p,d
+				print 'Hits:', accepted,'Parameters:',p,'(d =',d,')'
 		weights.append(computeWeights(pop,prior,i,weights))
 		distances.append(Distance)
 		results[0] = pop

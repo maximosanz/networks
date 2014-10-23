@@ -25,26 +25,33 @@ leave=False
 if len(sys.argv)>1:
 	for opt in sys.argv[1:]:
 		if re.match('--',opt):
-			val = sys.argv[sys.argv.index(opt)+1]
-			opt = opt[2:]
-			if opt == 'nparam':
-				Nparam = int(val)
-			elif opt == 'restart':
-				restartF = val
-			elif opt = 'data':
-				inputFilename = val
-			elif opt == 'npart':
-				Np = int(val)
-			elif opt == 'percentile':
-				percentile = int(val)
-			elif opt == 'Estart':
-				Estart = float(val)
-			elif opt == 'Eend':
-				Eend = float(val)
-			elif opt == 'out':
-				outputFilename = val
-			elif opt == 'transform':
-				transform = True
+			try:
+				val = sys.argv[sys.argv.index(opt)+1]
+			except IndexError:
+				val = None
+			try:
+				opt = opt[2:]
+				if opt == 'nparam':
+					Nparam = int(val)
+				elif opt == 'restart':
+					restartF = val
+				elif opt == 'data':
+					inputFilename = val
+				elif opt == 'npart':
+					Np = int(val)
+				elif opt == 'percentile':
+					percentile = int(val)
+				elif opt == 'Estart':
+					Estart = float(val)
+				elif opt == 'Eend':
+					Eend = float(val)
+				elif opt == 'out':
+					outputFilename = val
+				elif opt == 'transform':
+					transform = True
+			except TypeError:
+				leave = True
+				
 else:
 	leave=True
 if not Nparam or not outputFilename or not inputFilename:
