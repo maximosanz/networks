@@ -57,10 +57,14 @@ Edit the R script to include your file names, parameter names and ranges.
 CURRENT PROBLEMS:
 ================
 
-1. Unidentified small memory leak in the graphlet counting code. When running ABC-SMC, since many iterations of the code are performed, memory usage goes higher and higher.
+1.
+
+Unidentified small memory leak in the graphlet counting code. When running ABC-SMC, since many iterations of the code are performed, memory usage goes higher and higher.
 
 Since the results are saved after each population, if memory usage becomes too high I recommend ending a simulation after a population is cleared and restarting it (which would bring the memory usage back to low levels).
 
 Can probably be fixed though (good luck...).
 
-2. Orbit counting can take a very long time (and even freeze) if the graph has a very large number of edges.
+2.
+
+Orbit counting can take a very long time (and even freeze) if the graph has a very large number of edges.
