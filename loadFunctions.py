@@ -3,7 +3,7 @@ import numpy as np
 import random as rd
 import networkx as nx
 import orca
-import modelling_functions as modf
+
 
 def perturb(p0,prior,pop):
     # uniform component wise perturbation kernel
