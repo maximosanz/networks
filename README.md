@@ -1,11 +1,47 @@
 networks
 ========
 
-Generative models and ABC-SMC framework for biological networks
+## Generative models and Approximate Bayesian Computation framework for biological networks
 
-Files:
+This code implements three different generative models for [protein-protein interaction networks](https://en.wikipedia.org/wiki/Protein%E2%80%93protein_interaction#Interaction_networks):
 
-- orca.so/libcorca.so: Cython/C++ libraries to count orbits (method from Hočevar, Demšar. Bioinformatics. 2014;30(4):559-65.)
+### Gene duplication & divergence (DD)
+
+At every step, a randomly chosen node is duplicated (red in the image below). The child node inherits its parent’s superfamily attribute and all its interactions. These redundant edges may be lost with probability `p`, but at least one from each pair must remain. In addition, a parent-child edge may be added with probability `r`.
+
+<img src="https://github.com/maximosanz/networks/blob/master/Images/DD.png" width="400" title="DD_model">
+ 
+### Gene duplication-divergence-attachment (DDA)
+ 
+The DDA model includes an additional step, in which a random node is chosen and either parent or child draw a connection to it with probability `s`.
+
+<img src="https://github.com/maximosanz/networks/blob/master/Images/DDA.png" width="612" title="DDA_model">
+
+### Gene domain duplication-divergence-attachment (Domain-DDA)
+
+Domain-DDA model. At every iteration, a new superfamily (pink node) may appear with probability `t`, connecting to one random node in the graph. If this does not occur, the DDA process is followed.
+
+<img src="https://github.com/maximosanz/networks/blob/master/Images/Domain_DDA.png" width="612" title="Domain_DDA_model">
+
+## Parameter inference using Approximate Bayesian Computation (ABC)
+
+The `abcsmc.py` script provides a framework for knowledge-based parameter estimation using the Approximate Bayesian Computation - Sequential Monte Carlo (ABC-SMC) algorithm.
+
+The different generative models can be run and compared against an experimental protein-protein interaction network, such as the *Homo Sapiens* network:
+
+<img src="https://github.com/maximosanz/networks/blob/master/Images/H_Sapiens_Network.png" width="500" title="H_Sapiens_Network">
+
+The *Homo Sapiens* network was used to estimate the parameters of each model using [Approximate Bayesian Computation](https://en.wikipedia.org/wiki/Approximate_Bayesian_computation)-Sequential Monte Carlo. 
+
+In order to compute the distance between networks, the [Graphlet degree distribution agreement](https://en.wikipedia.org/wiki/Graphlets#Graphlet_degree_distribution_agreement) is used. Graphlets are computed by the `orca` libraries (from [Hočevar, Demšar. Bioinformatics. 2014;30(4):559-65](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-018-2483-9)).
+
+Example of posterior parameter distributions obtained by ABC-SMC for the Domain-DDA model:
+
+<img src="https://github.com/maximosanz/networks/blob/master/Images/Posteriors.png" width="600" title="Posteriors">
+
+## Files in this repository
+
+- orca.so/libcorca.so: Cython/C++ libraries to count orbits (method from [Hočevar, Demšar. Bioinformatics. 2014;30(4):559-65](https://bmcbioinformatics.biomedcentral.com/articles/10.1186/s12859-018-2483-9))
 
 - modelling_functions.py: Graph generative models and other utilities
 
@@ -15,25 +51,24 @@ Files:
 
 Directories:
 
-- orca: C++ and Cython code for graphlet counting. I would recommend doing as much as possible to avoid recompiling... Or even going inside this directory. It can be frustrating
+- orca: C++ and Cython code for graphlet counting.
 
 - plotting: Utilities for plotting posterior densities as approximised by the algorithm
 
-GUIDELINES:
-===========
+## Guidelines
 
-- If you want to perform ABC-SMC on networks:
+### Performing ABC-SMC on networks
 
 You must have a generative model as a python function that takes in an array of parameter values as input and returns a networkX graph object.
 First edit the abcsmc_graphs function in loadFunctions.py to call your function.
-Then you can simply run abcsmc.py with a the required and optional arguments (python abcsmc.py to see them).
+Then you can simply run abcsmc.py with a the required and optional arguments.
 
-Liepe et al., Bioinformatics. 2010 Jul 15;26(14):1797-9. For details on the meaning of different options.
+[Liepe et al., Bioinformatics. 2010 Jul 15;26(14):1797-9](https://europepmc.org/article/PMC/2894518) for details on the meaning of different options.
 
-Toni et al., J R Soc Interface. 2009 Feb 6;6(31):187-202. To see how the algorithm works.
+[Toni et al., J R Soc Interface. 2009 Feb 6;6(31):187-202](https://royalsocietypublishing.org/doi/10.1098/rsif.2008.0172) To see how the algorithm works.
 
 
-- If you want to run the generative DD model or versions of it:
+### Running the generative DD model or versions of it
 
 All required functions are in modelling_functions.py
 
@@ -43,28 +78,12 @@ To turn the different options on and off provide the function with boolean argum
 
 A seed must be provided to the function, generated by create_seed. The seed can be an existing graph or None, in which case a ring of size ringSize is created.
 
-The parameters of the model are all entered as an array, in the following order: [pLoss,pGain,pNewSuperfamily,pParentChild]. Only applicable parameters should be provided.
+The parameters of the model are all entered as an array, in the following order: `[pLoss,pGain,pNewSuperfamily,pParentChild]`. Only applicable parameters should be provided.
 
 The desired number of nodes must be specified. The graph will be grown until that number of nodes with at least one non-self edge is reached (i.e. omit orphans and nodes with only a self-loop).
 
-- If you want to plot ABC-SMC results:
+### Plotting ABC-SMC results
 
 Run pickle2table.py on your pickle output from abcsmc.py
 
 Edit the R script to include your file names, parameter names and ranges.
-
-
-CURRENT PROBLEMS:
-================
-
-1.
-
-Unidentified small memory leak in the graphlet counting code. When running ABC-SMC, since many iterations of the code are performed, memory usage goes higher and higher.
-
-Since the results are saved after each population, if memory usage becomes too high I recommend ending a simulation after a population is cleared and restarting it (which would bring the memory usage back to low levels).
-
-Can probably be fixed though (good luck...).
-
-2.
-
-Orbit counting can take a very long time (and even freeze) if the graph has a very large number of edges.
